@@ -2,9 +2,6 @@ import telebot
 import requests
 from bs4 import BeautifulSoup
 import re
-from nltk.stem.snowball import SnowballStemmer
-
-stemmer = SnowballStemmer("russian")
 
 bot = telebot.TeleBot('961998122:AAFwHfsHfhn1y9hnvrQ4ZyQcSOVXgahfi0I')
 
@@ -20,9 +17,9 @@ def send_welcome(message):
     try:
         global k
         bot.send_message(message.chat.id, "Отправьте мне ссылку на RSS ленту: " + "\n\n" +
-                         "Список популярных RSS лент: " + "\n" + "Лента ру - /LentaRu" + "\n" +
-                         "СПОРТ сегодня - /SportToday" + "\n" +
-                         "Travel ru -  /TravelRu")
+                         "Список популярных RSS лент: " + "\n" + "Лента ру - http://lenta.ru/l/r/EX/import.rss" + "\n" +
+                         "СПОРТ сегодня - http://www.sports.ru/sports_docs.xml" + "\n" +
+                         "Travel ru -  http://www.travel.ru/inc/side/yandex.rdf")
         k = 0
     except:
         bot.send_message(message.chat.id, "Возникла ошибка.")
@@ -36,22 +33,14 @@ def get_help(message):
     except:
         bot.send_message(message.chat.id, "Error")
 
-@bot.message_handler(commands=['donate'])
-def donate(message):
-    pass
 
 @bot.message_handler(content_types=['text'])
 def start_message(message):
-    dict_tape = {"/LentaRu": "http://lenta.ru/l/r/EX/import.rss",
-                 "/SportToday": "http://www.sports.ru/sports_docs.xml",
-                 "/TravelRu": "http://www.travel.ru/inc/side/yandex.rdf"}
     a = 0
-    lst_frequency = []
-    count = 0
     try:
         global k, url
         if k == 0:
-            url = dict_tape[message.text]
+            url = message.text
             bot.send_message(message.chat.id, "Сообщите пару ключевых слов: " +
                              "\n\n" +
                              "например: Трамп, Зеленский, сообщил")
@@ -64,25 +53,17 @@ def start_message(message):
             items = soup.findAll('item')
             key_words = category
             for item in items:
-                count += 1
                 for k in key_words.split(","):
-                    for i in (" ".join([stemmer.stem(i.lower()) for i in item.title.text.split()]) + " " + " ".join(
-                            [stemmer.stem(i.lower()) for i in cleanhtml(item.description.text).split()])).split():
-                        if i == stemmer.stem(k):
-                            a += 1
-                            if item.link.text not in lst_frequency:
-                                lst_frequency.append(item.link.text)
-                                bot.send_message(message.chat.id,
-                                                item.title.text +
-                                                "\n" +
-                                                cleanhtml(item.description.text) +
-                                                    "\n" +
-                                                "Ссылка на новость: "+
-                                                item.link.text)
+                    if (k.lower() in " ".join([i.lower() for i in item.title.text.split()])) or (
+                            k.lower() in " ".join([i.lower() for i in cleanhtml(item.description.text).split()])):
+                        a += 1
+                        bot.send_message(message.chat.id,
+                                         item.title.text +
+                                         "\n" +
+                                         cleanhtml(item.description.text))
+
             if a == 0:
-                bot.send_message(message.chat.id, "К сожалению, по данному запросу новости отсутствуют")
-            if count == len(items):
-                bot.send_message(message.chat.id, "Нажмите /start для нового поиска новостей")
+                bot.send_message(message.chat.id, "По данному запросу новостей нема")
             k = 0
     except:
         bot.send_message(message.chat.id, "Произошла ошибка. Возможно вы ввели неверные данные. "
