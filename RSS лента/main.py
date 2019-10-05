@@ -3,10 +3,41 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from nltk.stem.snowball import SnowballStemmer
+import json
+import time
 
 stemmer = SnowballStemmer("russian")
 
 bot = telebot.TeleBot('961998122:AAFwHfsHfhn1y9hnvrQ4ZyQcSOVXgahfi0I')
+
+with open("users_info.json", 'r') as users:
+    content = json.load(users)
+
+
+def already_user(cont, url, key_words):
+    req = {
+        "time": time.ctime(),
+        "tape": url,
+        "key_words": key_words
+    }
+    cont["requests"].append(req)
+    with open("users_info.json", 'w') as users:
+        json.dump(content, users)
+
+
+def new_users(user_id, url, key_words):
+    req = {
+        "time": time.ctime(),
+        "tape": url,
+        "key_words": key_words
+    }
+    dict = {
+        "user_id": user_id,
+        "requests": [req]
+    }
+    content.append(dict)
+    with open("users_info.json", 'w') as users:
+        json.dump(content, users)
 
 
 def cleanhtml(raw_html):
@@ -36,9 +67,6 @@ def get_help(message):
     except:
         bot.send_message(message.chat.id, "Error")
 
-@bot.message_handler(commands=['donate'])
-def donate(message):
-    pass
 
 @bot.message_handler(content_types=['text'])
 def start_message(message):
@@ -73,17 +101,25 @@ def start_message(message):
                             if item.link.text not in lst_frequency:
                                 lst_frequency.append(item.link.text)
                                 bot.send_message(message.chat.id,
-                                                item.title.text +
-                                                "\n" +
-                                                cleanhtml(item.description.text) +
-                                                    "\n" +
-                                                "Ссылка на новость: "+
-                                                item.link.text)
+                                                 item.title.text +
+                                                 "\n" +
+                                                 cleanhtml(item.description.text) +
+                                                 "\n" +
+                                                 "Ссылка на новость: " +
+                                                 item.link.text)
             if a == 0:
                 bot.send_message(message.chat.id, "К сожалению, по данному запросу новости отсутствуют")
+            k = 0
+
+            for j in range(len(content)):
+                if content[j]["user_id"] == message.from_user.id:
+                    already_user(content[j], url, category)
+                else:
+                    if j == len(content) - 1:
+                        new_users(message.from_user.id, url, category)
+
             if count == len(items):
                 bot.send_message(message.chat.id, "Нажмите /start для нового поиска новостей")
-            k = 0
     except:
         bot.send_message(message.chat.id, "Произошла ошибка. Возможно вы ввели неверные данные. "
                                           "Повторите попытку позже.")
