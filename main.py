@@ -3,42 +3,19 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from nltk.stem.snowball import SnowballStemmer
-import json
 import time
+import psycopg2
 
 stemmer = SnowballStemmer("russian")
 
 bot = telebot.TeleBot('961998122:AAFwHfsHfhn1y9hnvrQ4ZyQcSOVXgahfi0I')
-
-with open("users_info.json", 'r') as users:
-    content = json.load(users)
-
-
-def already_user(cont, url, key_words):
-    req = {
-        "time": time.ctime(),
-        "tape": url,
-        "key_words": key_words
-    }
-    cont["requests"].append(req)
-    with open("users_info.json", 'w') as users:
-        json.dump(content, users)
-
-
-def new_users(user_id, url, key_words):
-    req = {
-        "time": time.ctime(),
-        "tape": url,
-        "key_words": key_words
-    }
-    dict = {
-        "user_id": user_id,
-        "requests": [req]
-    }
-    content.append(dict)
-    with open("users_info.json", 'w') as users:
-        json.dump(content, users)
-
+con = psycopg2.connect(
+                database="d5t114hskmjdr0",
+                user="pzriznzhbmeuew",
+                password="4792e5dd27694609ef7847d6e4b608b064ede5c2483a7b71403d3022af31e2f8",
+                host="ec2-50-17-246-114.compute-1.amazonaws.com",
+                port="5432"
+            )
 
 def cleanhtml(raw_html):
     cleanr = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
@@ -79,7 +56,10 @@ def start_message(message):
     try:
         global k, url
         if k == 0:
-            url = dict_tape[message.text]
+            if message.text in dict_tape:
+                url = dict_tape[message.text]
+            else:
+                url = message.text
             bot.send_message(message.chat.id, "Сообщите пару ключевых слов: " +
                              "\n\n" +
                              "например: Трамп, Зеленский, сообщил")
@@ -111,18 +91,24 @@ def start_message(message):
                 bot.send_message(message.chat.id, "К сожалению, по данному запросу новости отсутствуют")
             k = 0
 
-            for j in range(len(content)):
-                if content[j]["user_id"] == message.from_user.id:
-                    already_user(content[j], url, category)
-                else:
-                    if j == len(content) - 1:
-                        new_users(message.from_user.id, url, category)
+            values = {
+                "id": message.from_user.id,
+                "time": time.ctime(),
+                "url": url,
+                "key_words": key_words
+            }
+
+            cur = con.cursor()
+            cur.execute(
+                "INSERT INTO USERS_DATA (USER_ID, TIME, URL, KEY_WORDS) VALUES (%(id)s, %(time)s, %(url)s, %(key_words)s)",
+                values)
+            con.commit()
 
             if count == len(items):
                 bot.send_message(message.chat.id, "Нажмите /start для нового поиска новостей")
     except:
         bot.send_message(message.chat.id, "Произошла ошибка. Возможно вы ввели неверные данные. "
-                                          "Повторите попытку позже.")
+                                            "Повторите попытку позже.")
 
 
 bot.polling()
