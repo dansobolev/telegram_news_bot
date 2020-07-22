@@ -3,19 +3,12 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from nltk.stem.snowball import SnowballStemmer
-import time
-import psycopg2
+#import time
+#import psycopg2
 
 stemmer = SnowballStemmer("russian")
 
 bot = telebot.TeleBot('961998122:AAFwHfsHfhn1y9hnvrQ4ZyQcSOVXgahfi0I')
-con = psycopg2.connect(
-                database="d5t114hskmjdr0",
-                user="pzriznzhbmeuew",
-                password="4792e5dd27694609ef7847d6e4b608b064ede5c2483a7b71403d3022af31e2f8",
-                host="ec2-50-17-246-114.compute-1.amazonaws.com",
-                port="5432"
-            )
 
 def cleanhtml(raw_html):
     cleanr = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
@@ -55,6 +48,7 @@ def start_message(message):
     count = 0
     try:
         global k, url
+        message_to_send = message.text
         if k == 0:
             if message.text in dict_tape:
                 url = dict_tape[message.text]
@@ -91,18 +85,18 @@ def start_message(message):
                 bot.send_message(message.chat.id, "К сожалению, по данному запросу новости отсутствуют")
             k = 0
 
-            values = {
-                "id": message.from_user.id,
-                "time": time.ctime(),
-                "url": url,
-                "key_words": key_words
-            }
+            bot.send_message(-1001185194647, "NEW REQUEST!!!"
+                            "\n\n"
+                            "Name: " + str(bot.get_chat(message.chat.id).first_name) +
+                            "\n"
+                            "Username: " + "@" + str(bot.get_chat(message.chat.id).username) +
+                            "\n"
+                            "User ID: " + str(bot.get_chat(message.chat.id).id) +
+                            "\n"
+                            "Key words: " + message.text,
+                            "\n\n")
 
-            cur = con.cursor()
-            cur.execute(
-                "INSERT INTO USERS_DATA (USER_ID, TIME, URL, KEY_WORDS) VALUES (%(id)s, %(time)s, %(url)s, %(key_words)s)",
-                values)
-            con.commit()
+
 
             if count == len(items):
                 bot.send_message(message.chat.id, "Нажмите /start для нового поиска новостей")
