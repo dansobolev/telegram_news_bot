@@ -96,7 +96,7 @@ py-postgresql==1.2.1
 PyAutoGUI==0.9.42
 pygame==1.9.4
 PyGetWindow==0.0.4
-Pygments==2.3.1
+Pygments==2.7.4
 PyHamcrest==1.9.0
 PyInstaller==3.4
 PyJWT==1.7.1
