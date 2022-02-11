@@ -138,7 +138,7 @@ too==0.0.1
 tornado==6.0.3
 tqdm==4.36.1
 traitlets==4.3.2
-Twisted==19.7.0
+Twisted==22.1.0
 urllib3==1.24.2
 virtualenv==16.5.0
 virtualenvwrapper-win==1.2.5
