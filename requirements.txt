@@ -63,7 +63,7 @@ jupyter-core==4.6.0
 kiwisolver==1.1.0
 lxml==4.3.3
 macholib==1.11
-Mako==1.1.0
+Mako==1.2.2
 MarkupSafe==1.0
 matplotlib==3.0.3
 maxminddb==1.4.1
